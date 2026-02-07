@@ -40,30 +40,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const isMobile = window.innerWidth <= 1000;
 
-    gsap.set(
-        [
-            ".split-overlay .intro-title .first-char span",
-            ".split-overlay .outro-title .char span",
-        ],
-        { y: "0%" }
-    );
-
-    gsap.set(".split-overlay .intro-title .first-char ", {
-        x: isMobile ? "7.5rem" : "18rem",
-        y: isMobile ? "-1rem" : "-2.75rem",
-        fontWeight: "900",
-        scale: 0.75,
-
-    });
-
-    gsap.set(".split-overlay .outro-title .char", {
-        x: isMobile ? "-3rem" : "-8rem",
-        fontSize: isMobile ? "6rem" : "14rem",
-        fontWeight: "500",
-
-    });
-
-
     const t1 = gsap.timeline({ defaults: { ease: "hop" } });
     const tags = gsap.utils.toArray(".tag");
 
@@ -71,7 +47,6 @@ document.addEventListener("DOMContentLoaded", () => {
         t1.to(tag.querySelectorAll("p .word"), {
             y: "0%",
             duration: 0.6,
-
         },
             0.5 + index * 0.1
         );
@@ -82,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
         {
             y: "0%",
             duration: 0.75,
-            stagger: 0.05,
+            // stagger removed
         },
         0.5
     ).to(".preloader .outro-title .char:not(.first-char) span", {
@@ -102,70 +77,140 @@ document.addEventListener("DOMContentLoaded", () => {
             2.5
 
         ).to(
-            ".preloader .intro-title .first-char",
+            ".preloader .intro-title .char span",
             {
-                x: isMobile ? "9rem" : "21.25rem",
-                duration: 1,
-            },
-            3.5
-        )
-        .to(
-            ".preloader .outro-title .char",
-            {
-                x: isMobile ? "-3rem" : "-8rem",
-                duration: 1,
-            },
-            3.5
-        )
-        .to(
-            ".preloader .intro-title .first-char",
-            {
-                x: isMobile ? "7.5rem" : "18rem",
-                y: isMobile ? "-1rem" : "-2.75rem",
-                fontWeight: "900",
-                scale: 0.75,
+                y: "0%",
                 duration: 0.75,
+                // stagger removed for "one block" appearance
             },
-            4.5
+            2.5
         )
+        // New YANG Animation Logic
         .to(
-            ".preloader .outro-title .char",
+            [".preloader .intro-title .char", ".preloader .outro-title .char"],
             {
-                x: isMobile ? "-3rem" : "-8rem",
-                fontSize: isMobile ? "6rem" : "14rem",
-                fontWeight: "500",
-                duration: 0.75,
-                onStart: () => {
-                    // Ensure the final B is hidden initially if needed, or handle it via CSS/another Tween
-                    // For now, let's assume the "move" covers it, and we might need to hide the destination B
-                    // But the destination B is likely ".card h1 .char" or similar.
-                    // The user said: "B moved to the last position should not be displayed all the time, should display after move"
-                    // The "First Char" being moved is: .preloader .intro-title .first-char
-                    // The destination is likely implicity covered by the layout or the .card.
-
-                    // Let's actually look at where it goes.
-                    // It goes to x: 18rem, y: -2.75rem.
-                    // That position is where "Byzantium" (on the card) starts.
-
-                    // We should hide the ".card h1 .char:first-child" initially, and reveal it when this tween ends.
-                    gsap.set(".card h1 .char:first-child span", { opacity: 0 });
+                opacity: (i, target) => {
+                    // Indices for B(0) Y(1) Z(2) A(3) N(4) T(5) I(6) U(7) M(8) G(9) E(10) N(11) E(12)
+                    // Target Indices: 1 (Y), 3 (A), 4 (N), 9 (G)
+                    // Note: We need to check the text content to be safe, or stick to indices if confident.
+                    // The querySelectorAll returns all chars.
+                    // "BYZANTIUM GENE" -> 13 chars.
+                    // Let's rely on indices for "BYZANTIUM GENE".
+                    // We need to match indices 1, 3, 4, 9.
+                    // IMPORTANT: The selection above targets ALL chars including outro-title (10).
+                    // We need to be specific about which set of chars checks which logic.
+                    // But actually, we can just use a separate tween for fading out non-targets.
+                    return 1; // overridden below
                 },
-                onComplete: () => {
-                    gsap.set(".preloader", {
-                        clipPath: "polygon(0 0, 100% 0, 100% 50%, 0 50%)",
-                    });
-                    gsap.set(".split-overlay", {
-                        clipPath: "polygon(0 50%, 100% 50%, 100% 100%, 0 100%)",
-                    });
-                    // Reveal the final B
-                    gsap.set(".card h1 .char:first-child span", { opacity: 1 });
-                    // Hide the flying B (optional, if they overlap perfectly)
-                    gsap.set(".preloader .intro-title .first-char", { opacity: 0 });
-                }
+                // We'll separate the fade logic to be cleaner
+            },
+            3.5
+        )
+        // Fade out non-target chars
+        .to(
+            ".preloader .intro-title .char",
+            {
+                opacity: (i) => {
+                    // Keep indices 1, 3, 4, 9
+                    return [1, 3, 4, 9].includes(i) ? 1 : 0;
+                },
+                duration: 0.5
+            },
+            3.5
+        )
+        // Reset the 'first-char' specific props if inherited
+        // Move Target Chars to Center
+        .to(
+            ".preloader .intro-title .char", // We need to target specific ones
+            {
+                x: (i) => {
+                    if (![1, 3, 4, 9].includes(i)) return 0;
+
+                    const isMobile = window.innerWidth <= 1000;
+
+                    // Goal: Center YANG.
+                    // Y(1), A(3), N(4) are Left of center -> Move RIGHT (+).
+                    // G(9) is Right of center -> Move LEFT (-).
+
+                    if (i === 1) return isMobile ? "6rem" : "10rem";   // Y: Move Right significantly
+                    if (i === 3) return isMobile ? "3.5rem" : "8rem";  // A: Move Right
+                    if (i === 4) return isMobile ? "1rem" : "10.5rem";   // N: Move Right slightly
+                    if (i === 9) return isMobile ? "-1.5rem" : "-4rem";  // G: Move Left slightly
+                    return 0;
+                },
+                y: (i) => {
+                    // Move them to vertical center? They are already there (y:0).
+                    // However, the previous "B" logic moved B to specific x/y.
+                    // We keep y:0 for now.
+                    return "0%";
+                },
+                scale: 1.5, // Emphasize them?
+                duration: 1,
+                ease: "power2.inOut"
+            },
+            3.5
+        )
+        .to(
+            ".preloader .outro-title", // Hide the entire container to be safe
+            {
+                opacity: 0,
+                duration: 0.1 // Instant or fast
+            },
+            3.5
+        )
+        // Also hide the outro title "10" for now? Or keep it?
+        // User didn't specify, but "YANG" needs to split.
+        // The split animation logic (at 4.5s) moves .intro-title .char.
+        // We need to ensure that move applies to OUR new YANG.
+
+        .to(
+            ".split-overlay .intro-title .char",
+            {
+                opacity: (i) => [1, 3, 4, 9].includes(i) ? 1 : 0,
+                x: (i) => {
+                    const isMobile = window.innerWidth <= 1000;
+                    if (i === 1) return isMobile ? "6rem" : "10rem";
+                    if (i === 3) return isMobile ? "3.5rem" : "8rem";
+                    if (i === 4) return isMobile ? "1rem" : "10.5rem";
+                    if (i === 9) return isMobile ? "-1.5rem" : "-4rem";
+                    return 0;
+                },
+                scale: 1.5,
+                duration: 1,
+                ease: "power2.inOut"
+            },
+            3.5
+        )
+
+        // Final Resolve (Scale down or disappear?)
+        // The original logic had the "B" (first char) scale down and move to final position.
+        // Now "YANG" is the hero.
+        // User said: "split, move up and down".
+        // This is handled by the container clipPath / movement later.
+
+        // We just need to ensure they stay visible during the split.
+        // And maybe hide them at the very end when the card reveals.
+
+        .to(
+            ".preloader .intro-title .char",
+            {
+                // Maintain positions until split completes
+                duration: 0.1
             },
             4.5
-
         )
+        .call(() => {
+            // Ensure clip paths are set for split
+            gsap.set(".preloader", {
+                clipPath: "polygon(0 0, 100% 0, 100% 50%, 0 50%)",
+            });
+            gsap.set(".split-overlay", {
+                clipPath: "polygon(0 50%, 100% 50%, 100% 100%, 0 100%)",
+            });
+        }, null, 4.5)
+
+
+
         .to(
             ".container",
             {

@@ -66,6 +66,8 @@ p {
     top: 50%;
     left: calc(50%+10rem);
     transform: translate(-50%, -50%);
+    opacity: 0;
+    pointer-events: none;
 
 }
 
