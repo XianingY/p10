@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
         addFirstChar = false) => {
         const elements = document.querySelectorAll(selector);
         elements.forEach((element) => {
-            const splitText = SplitText(element, {
+            const splitText = new SplitText(element, {
                 type,
                 wordsClass: "word",
                 charsClass: "char"
