@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     t1.to(
-        ".preloader .intro-title .char span",
+        [".preloader .intro-title .char span", ".split-overlay .intro-title .char span"],
         {
             y: "0%",
             duration: 0.75,
@@ -135,6 +135,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 fontSize: isMobile ? "6rem" : "14rem",
                 fontWeight: "500",
                 duration: 0.75,
+                onStart: () => {
+                    // Ensure the final B is hidden initially if needed, or handle it via CSS/another Tween
+                    // For now, let's assume the "move" covers it, and we might need to hide the destination B
+                    // But the destination B is likely ".card h1 .char" or similar.
+                    // The user said: "B moved to the last position should not be displayed all the time, should display after move"
+                    // The "First Char" being moved is: .preloader .intro-title .first-char
+                    // The destination is likely implicity covered by the layout or the .card.
+
+                    // Let's actually look at where it goes.
+                    // It goes to x: 18rem, y: -2.75rem.
+                    // That position is where "Byzantium" (on the card) starts.
+
+                    // We should hide the ".card h1 .char:first-child" initially, and reveal it when this tween ends.
+                    gsap.set(".card h1 .char:first-child span", { opacity: 0 });
+                },
                 onComplete: () => {
                     gsap.set(".preloader", {
                         clipPath: "polygon(0 0, 100% 0, 100% 50%, 0 50%)",
@@ -142,6 +157,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     gsap.set(".split-overlay", {
                         clipPath: "polygon(0 50%, 100% 50%, 100% 100%, 0 100%)",
                     });
+                    // Reveal the final B
+                    gsap.set(".card h1 .char:first-child span", { opacity: 1 });
+                    // Hide the flying B (optional, if they overlap perfectly)
+                    gsap.set(".preloader .intro-title .first-char", { opacity: 0 });
                 }
             },
             4.5
